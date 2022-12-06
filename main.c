@@ -14,9 +14,11 @@ struct List {
     struct List* next;
 };
 
-int addressInRange( int virtualRegions[], int vrLength, int virtualAddress) {
+int addressInRange( unsigned int virtualRegions[], int vrLength, unsigned int virtualAddress) {
     int pointer = 0;
+    printf("vrlength: %d\n", vrLength);
     while ( pointer < vrLength) {
+        // printf("va %#010x va %d vr %d vr %d\n", virtualAddress, virtualAddress, virtualRegions[0], virtualRegions[1]);
         if ( virtualAddress >= virtualRegions[pointer++] && virtualAddress < virtualRegions[pointer++])
             return 1;
     }
@@ -55,11 +57,11 @@ int main(int argc, char* argv[]) {
     printf("The file %s has %d lines\n", filename, lineCount);
 
     int vrLength = (lineCount+1)*2;
-    int virtualRegions[vrLength];
+    unsigned int virtualRegions[vrLength];
 
     fp = fopen(filename, "r");
-    int num1 = 0;
-    int num2 = 0;
+    unsigned int num1 = 0;
+    unsigned num2 = 0;
     int index = 0;
 
     while (EOF != fscanf(fp, "%x %x\n", &num1, &num2))
@@ -97,7 +99,7 @@ int main(int argc, char* argv[]) {
     printf("The file %s has %d lines\n", filename2, lineCount);
 
     int vaLength = lineCount+1;
-    int virtualAddresses[vaLength];
+    unsigned int virtualAddresses[vaLength];
 
     fp = fopen(filename2, "r");
     num1 = 0;
@@ -115,7 +117,7 @@ int main(int argc, char* argv[]) {
         printf("%#010x\n", virtualAddresses[i]);
     }
 
-    int frames[frameCount];
+    unsigned int frames[frameCount];
     for ( int i = 0; i < frameCount; i++) {
         frames[i] = -1;
     }
@@ -150,7 +152,6 @@ int main(int argc, char* argv[]) {
                 printf("%#010x e\n", virtualAddresses[i]);
             } 
             else {
-
                 if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
                 {
                     // page fault occurred
@@ -159,7 +160,7 @@ int main(int argc, char* argv[]) {
 
                     // Make the updates frames's virtual address's page table index invalid
                     if ( frames[fifoPointer] != -1) {
-                        int removedFrameVA = frames[fifoPointer];
+                        unsigned int removedFrameVA = frames[fifoPointer];
                         int removedFirstTableIndex = ((removedFrameVA >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
                         int removedSecondTableIndex = ((removedFrameVA >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
 
@@ -232,9 +233,9 @@ int main(int argc, char* argv[]) {
                         frames[framesEmptyPointer] = virtualAddresses[i];   
 
                         // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
-                        int shiftedFrameNumber = (framesEmptyPointer << 12);
+                        unsigned int shiftedFrameNumber = (framesEmptyPointer << 12);
                         // printf("shifted frame no %d\n", shiftedFrameNumber);
-                        int physicalAddress = shiftedFrameNumber + offset;
+                        unsigned int physicalAddress = shiftedFrameNumber + offset;
                         printf("%#010x x\n", physicalAddress);
 
                         
@@ -246,7 +247,7 @@ int main(int argc, char* argv[]) {
                     else {
                         int lruVictim = lruNode->data;
 
-                        int removedFrameVA = frames[lruVictim];
+                        unsigned int removedFrameVA = frames[lruVictim];
                         int removedFirstTableIndex = ((removedFrameVA >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
                         int removedSecondTableIndex = ((removedFrameVA >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
 
@@ -258,7 +259,7 @@ int main(int argc, char* argv[]) {
                         // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
                         int shiftedFrameNumber = (lruVictim << 12);
                         // printf("shifted frame no %d\n", shiftedFrameNumber);
-                        int physicalAddress = shiftedFrameNumber + offset;
+                        unsigned int physicalAddress = shiftedFrameNumber + offset;
                         printf("%#010x x\n", physicalAddress);
 
                         // Find the next frame reference that is not equal to the frame number to update LRU
@@ -289,7 +290,7 @@ int main(int argc, char* argv[]) {
                     // printf("frameIndex %d\n", frameIndex);
                     int shiftedFrameNumber = (frameIndex << 12);
                     // printf("shifted frame no %d\n", shiftedFrameNumber);
-                    int physicalAddress = shiftedFrameNumber + offset;
+                    unsigned int physicalAddress = shiftedFrameNumber + offset;
                     printf("%#010x\n", physicalAddress);
                 
                 }
