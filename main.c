@@ -8,6 +8,12 @@ int table1Length = 1024;
 int table2Length = 1024;
 int twoLevelPageTable[1024][1024];
 
+// A linked list node
+struct List {
+    int data;
+    struct List* next;
+};
+
 int addressInRange( int virtualRegions[], int vrLength, int virtualAddress) {
     int pointer = 0;
     while ( pointer < vrLength) {
@@ -22,6 +28,7 @@ int main(int argc, char* argv[]) {
     // printf("%#010X %d\n",a, a);
 
     int frameCount = atoi(argv[3]);
+    int alg = atoi(argv[6]);
     char* outfile = argv[4];
     printf("Frame count: %d\n",frameCount);
     printf("Outfile: %s\n", outfile);
@@ -124,75 +131,168 @@ int main(int argc, char* argv[]) {
      * 
     */
 
-    // FIFO
-    printf("\nFIFO start\n");
-    int fifoPointer = 0;
+    if ( alg == 2) {
+        // FIFO
+        printf("\nFIFO start\n");
+        int fifoPointer = 0;
 
-    for ( int i = 0; i < vaLength; i++) {
-        printf("Virtual address %#010x\n", virtualAddresses[i]);
+        for ( int i = 0; i < vaLength; i++) {
+            printf("Virtual address %#010x\n", virtualAddresses[i]);
 
-        int firstTableIndex = ((virtualAddresses[i] >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
-        int secondTableIndex = ((virtualAddresses[i] >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
-        int offset = (virtualAddresses[i] & 0xFFF); // (get last 12 bits)
-        //f = ((virtualAddresses[i] >> 10) & 0xFF);
-        // printf("first %d second %d offset %d\n", firstTableIndex, secondTableIndex, offset);
+            int firstTableIndex = ((virtualAddresses[i] >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
+            int secondTableIndex = ((virtualAddresses[i] >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
+            int offset = (virtualAddresses[i] & 0xFFF); // (get last 12 bits)
+            //f = ((virtualAddresses[i] >> 10) & 0xFF);
+            // printf("first %d second %d offset %d\n", firstTableIndex, secondTableIndex, offset);
 
-        // Address dogru araliktami check!
-        if ( !addressInRange( virtualRegions, vrLength, virtualAddresses[i])) {
-            printf("%#010x e\n", virtualAddresses[i]);
-        } else {
-
-            if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
-            {
-                // page fault occurred
-
-                twoLevelPageTable[firstTableIndex][secondTableIndex] = fifoPointer;
-
-                // Make the updates frames's virtual address's page table index invalid
-                if ( frames[fifoPointer] != -1) {
-                    int removedFrameVA = frames[fifoPointer];
-                    int removedFirstTableIndex = ((removedFrameVA >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
-                    int removedSecondTableIndex = ((removedFrameVA >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
-
-                    twoLevelPageTable[removedFirstTableIndex][removedSecondTableIndex] = -1;
-                }
-
-                frames[fifoPointer] = virtualAddresses[i];
-
-                // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
-                // printf("fifoPointer %d\n", fifoPointer);
-                int shiftedFrameNumber = (fifoPointer << 12);
-                // printf("shifted frame no %d\n", shiftedFrameNumber);
-                int physicalAddress = shiftedFrameNumber + offset;
-                printf("%#010x x\n", physicalAddress);
-
-                fifoPointer++;
-                if ( fifoPointer == frameCount)
-                    fifoPointer = 0;
-
-                
+            // Address dogru araliktami check!
+            if ( !addressInRange( virtualRegions, vrLength, virtualAddresses[i])) {
+                printf("%#010x e\n", virtualAddresses[i]);
             } else {
-                // page fault did not occur
 
-                int frameIndex = twoLevelPageTable[firstTableIndex][secondTableIndex];
-                // For the case in which indices are the same but offset is different
-                if ( frames[frameIndex] != virtualAddresses[i])
-                    frames[frameIndex] = virtualAddresses[i];
+                if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
+                {
+                    // page fault occurred
 
-                // get frame index from page table and print physicall address
-                // printf("frameIndex %d\n", frameIndex);
-                int shiftedFrameNumber = (frameIndex << 12);
-                // printf("shifted frame no %d\n", shiftedFrameNumber);
-                int physicalAddress = shiftedFrameNumber + offset;
-                printf("%#010x\n", physicalAddress);
+                    twoLevelPageTable[firstTableIndex][secondTableIndex] = fifoPointer;
+
+                    // Make the updates frames's virtual address's page table index invalid
+                    if ( frames[fifoPointer] != -1) {
+                        int removedFrameVA = frames[fifoPointer];
+                        int removedFirstTableIndex = ((removedFrameVA >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
+                        int removedSecondTableIndex = ((removedFrameVA >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
+
+                        twoLevelPageTable[removedFirstTableIndex][removedSecondTableIndex] = -1;
+                    }
+
+                    frames[fifoPointer] = virtualAddresses[i];
+
+                    // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
+                    // printf("fifoPointer %d\n", fifoPointer);
+                    int shiftedFrameNumber = (fifoPointer << 12);
+                    // printf("shifted frame no %d\n", shiftedFrameNumber);
+                    int physicalAddress = shiftedFrameNumber + offset;
+                    printf("%#010x x\n", physicalAddress);
+
+                    fifoPointer++;
+                    if ( fifoPointer == frameCount)
+                        fifoPointer = 0;
+
+                    
+                } else {
+                    // page fault did not occur
+
+                    int frameIndex = twoLevelPageTable[firstTableIndex][secondTableIndex];
+                    // For the case in which indices are the same but offset is different
+                    if ( frames[frameIndex] != virtualAddresses[i])
+                        frames[frameIndex] = virtualAddresses[i];
+
+                    // get frame index from page table and print physicall address
+                    // printf("frameIndex %d\n", frameIndex);
+                    int shiftedFrameNumber = (frameIndex << 12);
+                    // printf("shifted frame no %d\n", shiftedFrameNumber);
+                    int physicalAddress = shiftedFrameNumber + offset;
+                    printf("%#010x\n", physicalAddress);
+                }
+            } 
+
+            printf("\n");
+        }
+    } else if ( alg == 1) {
+        printf("LRU alg\n");
+        
+        int framesEmptyPointer = 0;
+
+        // Initialize reference string
+        struct List* referenceString = (struct List*)malloc(sizeof(struct List));
+        referenceString->data = -1; 
+        referenceString->next = NULL;
+
+        struct List* lruNode = referenceString;
+
+        for ( int i = 0; i < vaLength; i++) {
+            int firstTableIndex = ((virtualAddresses[i] >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
+            int secondTableIndex = ((virtualAddresses[i] >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
+            int offset = (virtualAddresses[i] & 0xFFF); // (get last 12 bits)
+
+            // Address dogru araliktami check!
+            if ( !addressInRange( virtualRegions, vrLength, virtualAddresses[i])) {
+                printf("%#010x e\n", virtualAddresses[i]);
+            } 
+            else {
+                if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
+                {
+                    // page fault occurred
+                    if ( framesEmptyPointer < frameCount) {
+                        twoLevelPageTable[firstTableIndex][secondTableIndex] = framesEmptyPointer;
+                        frames[framesEmptyPointer] = virtualAddresses[i];   
+
+                        // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
+                        int shiftedFrameNumber = (framesEmptyPointer << 12);
+                        // printf("shifted frame no %d\n", shiftedFrameNumber);
+                        int physicalAddress = shiftedFrameNumber + offset;
+                        printf("%#010x x\n", physicalAddress);
+
+                        
+                        referenceString->data = framesEmptyPointer;
+                        referenceString->next = (struct List*)malloc(sizeof(struct List));
+
+                        framesEmptyPointer++;
+                    }
+                    else {
+                        int lruVictim = lruNode->data;
+
+                        int removedFrameVA = frames[lruVictim];
+                        int removedFirstTableIndex = ((removedFrameVA >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
+                        int removedSecondTableIndex = ((removedFrameVA >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
+
+                        twoLevelPageTable[removedFirstTableIndex][removedSecondTableIndex] = -1;
+                        twoLevelPageTable[firstTableIndex][secondTableIndex] = lruVictim;
+
+                        frames[lruVictim] = virtualAddresses[i];
+                        
+                        // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
+                        int shiftedFrameNumber = (lruVictim << 12);
+                        // printf("shifted frame no %d\n", shiftedFrameNumber);
+                        int physicalAddress = shiftedFrameNumber + offset;
+                        printf("%#010x x\n", physicalAddress);
+
+                        // Find the next frame reference that is not equal to the frame number to update LRU
+                        while ( lruNode != NULL && lruNode->data == lruVictim) {
+                            lruNode = lruNode->next;
+                        }
+                    }
+                }
+                else {
+                    // Page fault did not occur
+                    int frameIndex = twoLevelPageTable[firstTableIndex][secondTableIndex];
+                    // For the case in which indices are the same but offset is different
+                    if ( frames[frameIndex] != virtualAddresses[i])
+                        frames[frameIndex] = virtualAddresses[i];
+
+                    // Update LRU if the LRU frame is referenced
+                    if ( frameIndex == lruNode->data) {
+                        // Find the next frame reference that is not equal to the frame number
+                        while ( lruNode != NULL && lruNode->data == frameIndex) {
+                            lruNode = lruNode->next;
+                        }
+                    }
+
+                    // get frame index from page table and print physicall address
+                    // printf("frameIndex %d\n", frameIndex);
+                    int shiftedFrameNumber = (frameIndex << 12);
+                    // printf("shifted frame no %d\n", shiftedFrameNumber);
+                    int physicalAddress = shiftedFrameNumber + offset;
+                    printf("%#010x\n", physicalAddress);
+                
+                }
             }
-
         }
 
-        printf("\n");
-        
-    }
 
+    } else {
+        printf("Error: incorrect algorithm argument\n");
+    }
 
     return 0;
 }
