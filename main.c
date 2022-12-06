@@ -128,15 +128,18 @@ int main(int argc, char* argv[]) {
         //f = ((virtualAddresses[i] >> 10) & 0xFF);
         printf("first %d second %d offset %d\n", firstTableIndex, secondTableIndex, offset);
 
+        // Address dogru araliktami check!
+
 
         if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
         {
-            // page fault
+            // page fault occurred
 
             twoLevelPageTable[firstTableIndex][secondTableIndex] = fifoPointer;
-            frames[fifoPointer] = virtualAddresses[i];
+            frames[fifoPointer] = virtualAddresses[i]; // bu satirdan emin degilim
 
             // physical address translation (pa last 12 bits are the offset and the first 20 bits are frame number)
+            printf("fifoPointer %d\n", fifoPointer);
             int shiftedFrameNumber = (fifoPointer << 12);
             printf("shifted frame no %d\n", shiftedFrameNumber);
             int physicalAddress = shiftedFrameNumber + offset;
@@ -147,6 +150,10 @@ int main(int argc, char* argv[]) {
                 fifoPointer = 0;
 
             
+        } else {
+            // page fault did not occur
+
+            // get frame index from page table and print physicall address
         }
 
 
