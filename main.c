@@ -8,6 +8,15 @@ int table1Length = 1024;
 int table2Length = 1024;
 int twoLevelPageTable[1024][1024];
 
+int addressInRange( int virtualRegions[], int vrLength, int virtualAddress) {
+    int pointer = 0;
+    while ( pointer < vrLength) {
+        if ( virtualAddress >= virtualRegions[pointer++] && virtualAddress < virtualRegions[pointer++])
+            return 1;
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
     // unsigned int a = 0x0000a40c;
     // printf("%#010X %d\n",a, a);
@@ -126,36 +135,59 @@ int main(int argc, char* argv[]) {
         int secondTableIndex = ((virtualAddresses[i] >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
         int offset = (virtualAddresses[i] & 0xFFF); // (get last 12 bits)
         //f = ((virtualAddresses[i] >> 10) & 0xFF);
-        printf("first %d second %d offset %d\n", firstTableIndex, secondTableIndex, offset);
+        // printf("first %d second %d offset %d\n", firstTableIndex, secondTableIndex, offset);
 
         // Address dogru araliktami check!
-
-
-        if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
-        {
-            // page fault occurred
-
-            twoLevelPageTable[firstTableIndex][secondTableIndex] = fifoPointer;
-            frames[fifoPointer] = virtualAddresses[i]; // bu satirdan emin degilim
-
-            // physical address translation (pa last 12 bits are the offset and the first 20 bits are frame number)
-            printf("fifoPointer %d\n", fifoPointer);
-            int shiftedFrameNumber = (fifoPointer << 12);
-            printf("shifted frame no %d\n", shiftedFrameNumber);
-            int physicalAddress = shiftedFrameNumber + offset;
-            printf("Physical address %#010x\n", physicalAddress);
-
-            fifoPointer++;
-            if ( fifoPointer == frameCount)
-                fifoPointer = 0;
-
-            
+        if ( !addressInRange( virtualRegions, vrLength, virtualAddresses[i])) {
+            printf("%#010x e\n", virtualAddresses[i]);
         } else {
-            // page fault did not occur
 
-            // get frame index from page table and print physicall address
+            if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
+            {
+                // page fault occurred
+
+                twoLevelPageTable[firstTableIndex][secondTableIndex] = fifoPointer;
+
+                // Make the updates frames's virtual address's page table index invalid
+                if ( frames[fifoPointer] != -1) {
+                    int removedFrameVA = frames[fifoPointer];
+                    int removedFirstTableIndex = ((removedFrameVA >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
+                    int removedSecondTableIndex = ((removedFrameVA >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
+
+                    twoLevelPageTable[removedFirstTableIndex][removedSecondTableIndex] = -1;
+                }
+
+                frames[fifoPointer] = virtualAddresses[i];
+
+                // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
+                // printf("fifoPointer %d\n", fifoPointer);
+                int shiftedFrameNumber = (fifoPointer << 12);
+                // printf("shifted frame no %d\n", shiftedFrameNumber);
+                int physicalAddress = shiftedFrameNumber + offset;
+                printf("%#010x x\n", physicalAddress);
+
+                fifoPointer++;
+                if ( fifoPointer == frameCount)
+                    fifoPointer = 0;
+
+                
+            } else {
+                // page fault did not occur
+
+                int frameIndex = twoLevelPageTable[firstTableIndex][secondTableIndex];
+                // For the case in which indices are the same but offset is different
+                if ( frames[frameIndex] != virtualAddresses[i])
+                    frames[frameIndex] = virtualAddresses[i];
+
+                // get frame index from page table and print physicall address
+                // printf("frameIndex %d\n", frameIndex);
+                int shiftedFrameNumber = (frameIndex << 12);
+                // printf("shifted frame no %d\n", shiftedFrameNumber);
+                int physicalAddress = shiftedFrameNumber + offset;
+                printf("%#010x\n", physicalAddress);
+            }
+
         }
-
 
         printf("\n");
         
@@ -164,3 +196,5 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
+// 0-65536 & 1048576-1703936 & 268435456-281018368
