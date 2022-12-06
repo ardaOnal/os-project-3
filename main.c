@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
 
                     // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
                     // printf("fifoPointer %d\n", fifoPointer);
-                    unsigned int shiftedFrameNumber = (fifoPointer << 12);
+                    unsigned int shiftedFrameNumber = ((fifoPointer << 12) & 0xfffff000);
                     // printf("shifted frame no %d\n", shiftedFrameNumber);
                     unsigned int physicalAddress = shiftedFrameNumber + offset;
                     printf("%#010x x\n", physicalAddress);
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
 
                     // get frame index from page table and print physicall address
                     // printf("frameIndex %d\n", frameIndex);
-                    unsigned int shiftedFrameNumber = (frameIndex << 12);
+                    unsigned int shiftedFrameNumber = ((frameIndex << 12) & 0xfffff000);
                     // printf("shifted frame no %d\n", shiftedFrameNumber);
                     unsigned int physicalAddress = shiftedFrameNumber + offset;
                     printf("%#010x\n", physicalAddress);
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
                         frames[framesEmptyPointer] = virtualAddresses[i];   
 
                         // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
-                        unsigned int shiftedFrameNumber = (framesEmptyPointer << 12);
+                        unsigned int shiftedFrameNumber = ((framesEmptyPointer << 12) & 0xfffff000);
                         // printf("shifted frame no %d\n", shiftedFrameNumber);
                         unsigned int physicalAddress = shiftedFrameNumber + offset;
                         printf("%#010x x\n", physicalAddress);
@@ -258,7 +258,7 @@ int main(int argc, char* argv[]) {
                         frames[lruVictim] = virtualAddresses[i];
                         
                         // physical address translation (last 12 bits are the offset and the first 20 bits are frame number)
-                        unsigned int shiftedFrameNumber = (lruVictim << 12);
+                        unsigned int shiftedFrameNumber = ((lruVictim << 12) & 0xfffff000);
                         // printf("shifted frame no %d\n", shiftedFrameNumber);
                         unsigned int physicalAddress = shiftedFrameNumber + offset;
                         printf("%#010x x\n", physicalAddress);
@@ -289,7 +289,7 @@ int main(int argc, char* argv[]) {
 
                     // get frame index from page table and print physicall address
                     // printf("frameIndex %d\n", frameIndex);
-                    unsigned int shiftedFrameNumber = (frameIndex << 12);
+                    unsigned int shiftedFrameNumber = ((frameIndex << 12) & 0xfffff000);
                     // printf("shifted frame no %d\n", shiftedFrameNumber);
                     unsigned int physicalAddress = shiftedFrameNumber + offset;
                     printf("%#010x\n", physicalAddress);
