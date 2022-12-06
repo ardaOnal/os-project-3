@@ -55,11 +55,11 @@ int main(int argc, char* argv[]) {
     printf("The file %s has %d lines\n", filename, lineCount);
 
     int vrLength = (lineCount+1)*2;
-    unsigned int virtualRegions[vrLength];
+    int virtualRegions[vrLength];
 
     fp = fopen(filename, "r");
-    unsigned int num1 = 0;
-    unsigned int num2 = 0;
+    int num1 = 0;
+    int num2 = 0;
     int index = 0;
 
     while (EOF != fscanf(fp, "%x %x\n", &num1, &num2))
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
         printf("%#010x\n", virtualAddresses[i]);
     }
 
-    unsigned int frames[frameCount];
+    int frames[frameCount];
     for ( int i = 0; i < frameCount; i++) {
         frames[i] = -1;
     }
@@ -148,7 +148,8 @@ int main(int argc, char* argv[]) {
             // Address dogru araliktami check!
             if ( !addressInRange( virtualRegions, vrLength, virtualAddresses[i])) {
                 printf("%#010x e\n", virtualAddresses[i]);
-            } else {
+            } 
+            else {
 
                 if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
                 {
@@ -198,7 +199,8 @@ int main(int argc, char* argv[]) {
 
             printf("\n");
         }
-    } else if ( alg == 1) {
+    } 
+    else if ( alg == 1) {
         printf("LRU alg\n");
         
         int framesEmptyPointer = 0;
@@ -223,6 +225,8 @@ int main(int argc, char* argv[]) {
                 if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
                 {
                     // page fault occurred
+
+
                     if ( framesEmptyPointer < frameCount) {
                         twoLevelPageTable[firstTableIndex][secondTableIndex] = framesEmptyPointer;
                         frames[framesEmptyPointer] = virtualAddresses[i];   
@@ -265,7 +269,10 @@ int main(int argc, char* argv[]) {
                 }
                 else {
                     // Page fault did not occur
+
+
                     int frameIndex = twoLevelPageTable[firstTableIndex][secondTableIndex];
+
                     // For the case in which indices are the same but offset is different
                     if ( frames[frameIndex] != virtualAddresses[i])
                         frames[frameIndex] = virtualAddresses[i];
