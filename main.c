@@ -243,6 +243,17 @@ int main(int argc, char* argv[]) {
                         referenceString->data = framesEmptyPointer;
                         referenceString->next = (struct List*)malloc(sizeof(struct List));
 
+                        referenceString = referenceString->next;
+
+                        // lruya burdada bakilcak
+                        // Find the next frame reference that is not equal to the frame number to update LRU
+                        while ( lruNode != NULL && lruNode->data == framesEmptyPointer) {
+                            if ( lruNode->next == NULL)
+                                break;
+                            
+                            lruNode = lruNode->next;
+                        }
+
                         framesEmptyPointer++;
                     }
                     else {
