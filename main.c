@@ -107,17 +107,50 @@ int main(int argc, char* argv[]) {
     for ( int i = 0; i < table1Length; i++) 
         for ( int j = 0; j < table2Length; j++)
             twoLevelPageTable[i][j] = -1;
-    
+
+
+    /**
+     * Korpe dedi ki frame table framein kullanilip kullanilmadigini tutsun
+     * page table da framelere maplesin
+     * 
+    */
+
     // FIFO
+    printf("\nFIFO start\n");
+    int fifoPointer = 0;
+
     for ( int i = 0; i < vaLength; i++) {
-        unsigned int a, b, c, d; //to store byte by byte value
+        printf("Virtual address %#010x\n", virtualAddresses[i]);
 
-        a = (virtualAddresses[i] & 0xFF); //extract first byte
-        b = ((virtualAddresses[i] >> 8) & 0xFF); //extract second byte
-        c = ((virtualAddresses[i] >> 16) & 0xFF); //extract third byte
-        d = ((virtualAddresses[i] >> 24) & 0xFF); //extract fourth byte
+        int firstTableIndex = ((virtualAddresses[i] >> 22) & 1023); // 1023 = 1111111111 (get first 10 bits)
+        int secondTableIndex = ((virtualAddresses[i] >> 12) & 1023); // 1023 = 1111111111 (get second 10 bits)
+        int offset = (virtualAddresses[i] & 0xFFF); // (get last 12 bits)
+        //f = ((virtualAddresses[i] >> 10) & 0xFF);
+        printf("first %d second %d offset %d\n", firstTableIndex, secondTableIndex, offset);
 
-        printf("%#010x %02x %02x %02x %02x\n", virtualAddresses[i], d, c, b, a);
+
+        if ( twoLevelPageTable[firstTableIndex][secondTableIndex] == -1)
+        {
+            // page fault
+
+            twoLevelPageTable[firstTableIndex][secondTableIndex] = fifoPointer;
+            frames[fifoPointer] = virtualAddresses[i];
+
+            // physical address translation (pa last 12 bits are the offset and the first 20 bits are frame number)
+            int shiftedFrameNumber = (fifoPointer << 12);
+            printf("shifted frame no %d\n", shiftedFrameNumber);
+            int physicalAddress = shiftedFrameNumber + offset;
+            printf("Physical address %#010x\n", physicalAddress);
+
+            fifoPointer++;
+            if ( fifoPointer == frameCount)
+                fifoPointer = 0;
+
+            
+        }
+
+
+        printf("\n");
         
     }
 
